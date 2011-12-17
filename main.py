@@ -12,10 +12,18 @@ from pyglet.window.key import symbol_string
 from pyglet.gl import *
 from camera import Camera
 
-win = Window(fullscreen=True, visible=False)
+import pyglet
+
+import alone
+
+win = Window(fullscreen=False, visible=False)
 clockDisplay = clock.ClockDisplay()
 glClearColor(0.4, 0.2, 0.3, 0)
 camera = Camera((0, 0), 5)
+
+playerImage = pyglet.resource.image('man.png')
+
+sprite = pyglet.sprite.Sprite(playerImage, x=0, y=0)
 
 verts = [
     ((255, 000, 000), (+5, +4)),
@@ -35,7 +43,12 @@ def on_draw():
         glVertex2f(*position)
     glEnd()
 
+    glColor3ub(255, 255, 0)
+    sprite.draw()
+
     camera.hud_mode(win.width, win.height)
+    #print camera.x, camera.y
+    #glColor3ub(50, 50, 50)
     clockDisplay.draw()
 
 # on_draw is triggered after all events by default. This 'null' event
@@ -58,8 +71,6 @@ key_handlers = {
 def on_key_press(symbol, modifiers):
     handler = key_handlers.get(symbol, lambda: None)
     handler()
-
-print "keys to try:", [symbol_string(k) for k in key_handlers.keys()]
-stdout.flush()
+    
 win.set_visible()
 app.run()
