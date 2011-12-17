@@ -1,7 +1,7 @@
 import pyglet
 
 class Player(object):
-    def __init__(self, x=50, y=0):
+    def __init__(self, x=80, y=0):
         playerImage = pyglet.resource.image('man.png')
         self.sprite = pyglet.sprite.Sprite(playerImage, x=x, y=y)
         

@@ -34,6 +34,9 @@ class Camera(object):
         self.angle = angle
         self.target = Target(self)
 
+    def setTarget(self, x, y):
+        self.target.x = x
+        self.target.y = y
 
     def zoom(self, factor):
         self.target.scale *= factor
@@ -44,7 +47,6 @@ class Camera(object):
 
     def tilt(self, angle):
         self.target.angle += angle
-
 
     def update(self):
         self.x += (self.target.x - self.x) * 0.1
