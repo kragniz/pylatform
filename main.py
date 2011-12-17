@@ -15,133 +15,145 @@ import alone
 
 import random
 
-win = Window(fullscreen=False, visible=False)
-clockDisplay = clock.ClockDisplay()
-glClearColor(0.4, 0.2, 0.3, 0)
-camera = Camera((0, 0), 100)
+class Game(object):
+    def __init__(self):
+        self.win = Window(fullscreen=False, visible=False)
+        self.clockDisplay = clock.ClockDisplay()
+        glClearColor(0.4, 0.2, 0.3, 0)
+        self.camera = Camera((0, 0), 100)
 
-player = alone.Player()
+        self.player = alone.Player()
 
-space = pymunk.Space() #2
-space.gravity = (0.0, -20.0)
+        self.space = pymunk.Space() #2
+        self.space.gravity = (0.0, -20.0)
 
-balls = []
-lines = []
-BOX_WIDTH = 10
-boxes = []
+        self.balls = []
+        self.lines = []
+        self.BOX_WIDTH = 10
+        self.boxes = []
 
-level = (
-    (0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-    (0, 0, 0, 0, 0, 0, 0, 1, 1, 1),
-    (1, 0, 1, 1, 1, 0, 1, 1, 1, 1),
-    (1, 1, 1, 0, 0, 0, 1, 1, 1, 1),
-    (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-)
+        level = (
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1),
+            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1),
+            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1),
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+        )
 
-def add_ball(space):
-    mass = 1
-    radius = 4
-    inertia = pymunk.moment_for_circle(mass, 0, radius) # 1
-    body = pymunk.Body(mass, inertia) # 2
-    x = random.randint(120,380) / 10.0
-    body.position = x, 100 # 3
-    #shape = pymunk.Circle(body, radius) # 4
-    shape = pymunk.Poly(body, (
-        (-4, -4),
-        (+0, +4),
-        (+4, -4)))
-    space.add(body, shape) # 5
-    return shape
+        #build the level
+        for y, row in enumerate(reversed(level)):
+            for x, boxHere in enumerate(row):
+                if boxHere:
+                    self.boxes.append(self.add_static_box(
+                            x*(self.BOX_WIDTH+100),
+                            y*(self.BOX_WIDTH+100))
+                        )
 
-def add_static_box(space, x=0, y=0):
-    body = pymunk.Body()
-    body.position = (x, y)    
-    box = pymunk.Poly(body, (
-        (-BOX_WIDTH, -BOX_WIDTH),
-        (-BOX_WIDTH, +BOX_WIDTH),
-        (+BOX_WIDTH, +BOX_WIDTH),
-        (+BOX_WIDTH, -BOX_WIDTH)))
-    space.add_static(box)
-    return box
+    def add_ball(self):
+        mass = 1
+        radius = 4
+        inertia = pymunk.moment_for_circle(mass, 0, radius) # 1
+        body = pymunk.Body(mass, inertia) # 2
+        x = random.randint(120,380) / 10.0
+        body.position = x, 100 # 3
+        #shape = pymunk.Circle(body, radius) # 4
+        shape = pymunk.Poly(body, (
+            (-4, -4),
+            (+0, +4),
+            (+4, -4)))
+        self.space.add(body, shape) # 5
+        return shape
 
-#build the level
-for y, row in enumerate(reversed(level)):
-    for x, boxHere in enumerate(row):
-        if boxHere:
-            boxes.append(add_static_box(space, x*(BOX_WIDTH+100), y*(BOX_WIDTH+100)))
+    def add_static_box(self, x=0, y=0):
+        body = pymunk.Body()
+        body.position = (x, y)
+        w = self.BOX_WIDTH
+        box = pymunk.Poly(body, (
+            (-w, -w),
+            (-w, +w),
+            (+w, +w),
+            (+w, -w)))
+        self.space.add_static(box)
+        return box
 
-def draw_box(box):
-    p = int(box.body.position.x), int(box.body.position.y)
-    glBegin(GL_POLYGON)
-    glColor3ub(255, 100, 100)
-    glVertex2f(-BOX_WIDTH + p[0], -BOX_WIDTH + p[1])
-    glVertex2f(-BOX_WIDTH + p[0], +BOX_WIDTH + p[1])
-    glVertex2f(+BOX_WIDTH + p[0], +BOX_WIDTH + p[1])
-    glVertex2f(+BOX_WIDTH + p[0], -BOX_WIDTH + p[1])
-    glEnd()
+    def draw_box(self, box):
+        p = int(box.body.position.x), int(box.body.position.y)
+        glBegin(GL_POLYGON)
+        glColor3ub(255, 100, 100)
+        w = self.BOX_WIDTH
+        glVertex2f(-w + p[0], -w + p[1])
+        glVertex2f(-w + p[0], +w + p[1])
+        glVertex2f(+w + p[0], +w + p[1])
+        glVertex2f(+w + p[0], -w + p[1])
+        glEnd()
 
 
-def draw_line(line):
-    body = line.body
-    pv1 = body.position + line.a.rotated(body.angle)
-    pv2 = body.position + line.b.rotated(body.angle)
+    def draw_line(self, line):
+        body = line.body
+        pv1 = body.position + line.a.rotated(body.angle)
+        pv2 = body.position + line.b.rotated(body.angle)
 
-    glLineWidth (3)                                                                
-    pyglet.graphics.draw(2, pyglet.gl.GL_LINES,                                    
-        ('v2i', (int(pv1[0]), int(pv1[1]), int(pv2[0]), int(pv1[1])))                                                
-    )
+        glLineWidth (3)                                                                
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,                                    
+            ('v2i', (int(pv1[0]), int(pv1[1]), int(pv2[0]), int(pv1[1])))                                                
+        )
 
-def draw_ball(ball):
-    p = int(ball.body.position.x), int(ball.body.position.y)
-    glBegin(GL_POLYGON)
-    glColor3ub(255, 255, 000)
-    glVertex2f(-4 + p[0], -4 + p[1])
-    glVertex2f(+0 + p[0], +4 + p[1])
-    glVertex2f(+4 + p[0], -4 + p[1])
-    glEnd()
+    def draw_ball(self, ball):
+        p = int(ball.body.position.x), int(ball.body.position.y)
+        glBegin(GL_POLYGON)
+        glColor3ub(255, 255, 000)
+        glVertex2f(-4 + p[0], -4 + p[1])
+        glVertex2f(+0 + p[0], +4 + p[1])
+        glVertex2f(+4 + p[0], -4 + p[1])
+        glEnd()
 
-@win.event
+    def draw(self):
+        glClear(GL_COLOR_BUFFER_BIT)
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
+        self.camera.update()
+        self.camera.focus(self.win.width, self.win.height)
+
+        for ball in self.balls:
+            self.draw_ball(ball)
+
+        for box in self.boxes:
+            self.draw_box(box)
+
+        self.space.step(1/50.0)
+        self.player.sprite.draw()
+
+        self.camera.hud_mode(self.win.width, self.win.height)
+        #glColor3ub(50, 50, 50)
+        self.clockDisplay.draw()
+
+game = Game()
+
+@game.win.event
 def on_draw():
-    glClear(GL_COLOR_BUFFER_BIT)
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
-    camera.update()
-    camera.focus(win.width, win.height)
-
-    for ball in balls:
-        draw_ball(ball)
-
-    for box in boxes:
-        draw_box(box)
-
-    space.step(1/50.0)
-    player.sprite.draw()
-
-    camera.hud_mode(win.width, win.height)
-    #glColor3ub(50, 50, 50)
-    clockDisplay.draw()
+    game.draw()
 
 # on_draw is triggered after all events by default. This 'null' event
 # is scheduled just to force a screen redraw for every frame
 clock.schedule(lambda _: None)
 
 key_handlers = {
-    key.ESCAPE: lambda: win.close(),
-    key.PAGEUP: lambda: camera.zoom(2),
-    key.PAGEDOWN: lambda: camera.zoom(0.5),
-    key.LEFT: lambda: camera.setTarget(camera.x - 30, camera.y),
-    key.RIGHT: lambda: camera.setTarget(camera.x + 30, camera.y),
-    key.DOWN: lambda: camera.setTarget(camera.x, camera.y - 30),
-    key.UP: lambda: camera.setTarget(camera.x, camera.y + 30),
-    key.COMMA: lambda: camera.tilt(-1),
-    key.PERIOD: lambda: camera.tilt(+1),
-    key.SPACE: lambda: balls.append(add_ball(space)),
+    key.ESCAPE: lambda: game.win.close(),
+    key.PAGEUP: lambda: game.camera.zoom(2),
+    key.PAGEDOWN: lambda: game.camera.zoom(0.5),
+    key.LEFT: lambda: game.camera.setTarget(game.camera.x - 30, game.camera.y),
+    key.RIGHT: lambda: game.camera.setTarget(game.camera.x + 30, game.camera.y),
+    key.DOWN: lambda: game.camera.setTarget(game.camera.x, game.camera.y - 30),
+    key.UP: lambda: game.camera.setTarget(game.camera.x, game.camera.y + 30),
+    key.COMMA: lambda: game.camera.tilt(-1),
+    key.PERIOD: lambda: game.camera.tilt(+1),
+    key.SPACE: lambda: game.balls.append(add_ball(space)),
 }
 
-@win.event
+@game.win.event
 def on_key_press(symbol, modifiers):
     handler = key_handlers.get(symbol, lambda: None)
     handler()
     
-win.set_visible()
+game.win.set_visible()
 app.run()
