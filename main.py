@@ -123,15 +123,12 @@ class Game(object):
         glBegin(GL_POLYGON)
         glColor3ub(255, 255, 000)
 
-        points = (Vector2(-4, -4),
-                  Vector2(+0, +4),
-                  Vector2(+4, -4))
-        m = Matrix3.new_rotate(ball.body.angle)
-        m1 = Matrix3.new_translate(p[0], p[1])
-        m *= m1
-        glVertex2f(*(m * points[0]))
-        glVertex2f(*(m * points[1]))
-        glVertex2f(*(m * points[2]))
+        points = ((-4 + p[0], -4 + p[1]),
+                  (+0 + p[0], +4 + p[1]),
+                  (+4 + p[0], -4 + p[1]))
+        glVertex2f(*points[0])
+        glVertex2f(*points[1])
+        glVertex2f(*points[2])
         glEnd()
 
     def update_objects(self):
