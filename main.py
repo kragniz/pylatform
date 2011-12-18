@@ -25,10 +25,12 @@ class Game(object):
         self.camera = Camera((0, 0), 200)
 
         self.space = pymunk.Space() #2
-        self.space.gravity = (0, -50.0)
+        self.space.gravity = (0, -500.0)
 
         self.player = alone.Player()
         self.space.add(self.player.box, self.player.body)
+        self.space.add_collision_handler(0, 0, None, None, self.print_collision, None)
+
 
         self.balls = []
         self.lines = []
@@ -37,11 +39,11 @@ class Game(object):
         self.boxes = []
 
         level = (
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1),
-            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0),
+            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0),
+            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0),
+            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0),
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1)
         )
 
         #build the level
@@ -55,8 +57,13 @@ class Game(object):
 
         self.camera.setTarget(0, 0)
 
+    def print_collision(self, arb, surface):
+        if self.player.box in surface.shapes:
+            #check to see if the player is touching an object
+            self.player.touchingObject = True
+
     def move_camera(self):
-        self.camera.setTarget(*self.player.position)
+        self.camera.setTarget(*self.player.center)
 
     def set_camera_dx(self, dx):
         self.dx_camera = dx
@@ -178,7 +185,7 @@ key_press_handlers = {
     key.UP: lambda: game.set_camera_dy(1),
     key.COMMA: lambda: game.camera.tilt(-pi/2),
     key.PERIOD: lambda: game.camera.tilt(+pi/2),
-    key.SPACE: lambda: game.balls.append(game.add_ball()),
+    key.SPACE: lambda: game.player.jump(),
 }
 
 key_release_handlers = {

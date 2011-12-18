@@ -23,6 +23,12 @@ class Player(object):
             (self.width, self.height),
             (self.width, 0)))
         self.box.friction = 1
+
+        self.touchingObject = False
+
+    def jump(self):
+    	if self.touchingObject:
+    		self.body.apply_impulse((0, 4000))
         
     def update_position(self):
     	self.sprite.set_position(
@@ -30,14 +36,20 @@ class Player(object):
     	    self.box.body.position[1]
     	)
     	self.sprite.rotation = -self.box.body.angle * 180/pi
+    	self.touchingObject = False
 
     @property
     def position(self):
-    	return self.sprite.position
+    	return self.box.body.position
 
     @position.setter
     def position(self, p):
-    	self.sprite.position = p
+    	self.box.body.position = p
+
+    @property
+    def center(self):
+    	return self.box.body.position[0] + self.width / 2, \
+    	       self.box.body.position[1] + self.height / 2
 
     def move_x(self, dx):
     	self.sprite.x += dx
