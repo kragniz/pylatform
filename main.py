@@ -3,7 +3,7 @@ from __future__ import division
 from sys import stdout
 from math import pi
 from pyglet import app, clock
-from pyglet.window import key, Window
+from pyglet.window import key, Window, mouse
 from pyglet.window.key import symbol_string
 from pyglet.gl import *
 from camera import Camera
@@ -19,25 +19,27 @@ class Game(object):
     def __init__(self):
         self.win = Window(fullscreen=False, visible=False)
         self.clockDisplay = clock.ClockDisplay()
-        glClearColor(0.4, 0.2, 0.3, 0)
-        self.camera = Camera((0, 0), 100)
-
-        self.player = alone.Player()
+        glClearColor(0.2, 0.2, 0.2, 1)
+        self.camera = Camera((0, 0), 200)
 
         self.space = pymunk.Space() #2
-        self.space.gravity = (0.0, -20.0)
+        self.space.gravity = (0, -50.0)
+
+        self.player = alone.Player()
+        self.space.add(self.player.box, self.player.body)
 
         self.balls = []
         self.lines = []
-        self.BOX_WIDTH = 10
+
+        self.BOX_WIDTH = 30
         self.boxes = []
 
         level = (
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1),
+            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1),
+            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1),
+            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0),
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
         )
 
         #build the level
@@ -45,23 +47,47 @@ class Game(object):
             for x, boxHere in enumerate(row):
                 if boxHere:
                     self.boxes.append(self.add_static_box(
-                            x*(self.BOX_WIDTH+100),
-                            y*(self.BOX_WIDTH+100))
+                            x*(self.BOX_WIDTH*3),
+                            y*(self.BOX_WIDTH*3) - 200)
                         )
 
-    def add_ball(self):
+        #keyboard stuff
+        self.dx_camera = 0
+        self.dy_camera = 0
+        self.camera_speed_scale = 100
+
+        self.camera.setTarget(0, 0)
+
+    def move_camera(self):
+        #self.camera.setTarget(
+        #    self.camera.x + self.dx_camera * self.camera_speed_scale,
+        #    self.camera.y + self.dy_camera * self.camera_speed_scale
+        #)
+        self.camera.setTarget(*self.player.position)
+
+    def set_camera_dx(self, dx):
+        self.dx_camera = dx
+
+    def set_camera_dy(self, dy):
+        self.dy_camera = dy
+
+    def add_ball(self, x=0, y=0):
         mass = 1
         radius = 4
-        inertia = pymunk.moment_for_circle(mass, 0, radius) # 1
-        body = pymunk.Body(mass, inertia) # 2
-        x = random.randint(120,380) / 10.0
-        body.position = x, 100 # 3
+        inertia = pymunk.moment_for_circle(mass, 0, radius)
+        body = pymunk.Body(mass, inertia)
+        if not x:
+            x = random.randint(120,380) / 10.0
+        if not y:
+            y = 100
+        body.position = x, y
         #shape = pymunk.Circle(body, radius) # 4
         shape = pymunk.Poly(body, (
             (-4, -4),
             (+0, +4),
             (+4, -4)))
-        self.space.add(body, shape) # 5
+        shape.friction = 0.5
+        self.space.add(body, shape)
         return shape
 
     def add_static_box(self, x=0, y=0):
@@ -73,6 +99,7 @@ class Game(object):
             (-w, +w),
             (+w, +w),
             (+w, -w)))
+        box.friction = 0.5
         self.space.add_static(box)
         return box
 
@@ -107,6 +134,13 @@ class Game(object):
         glVertex2f(+4 + p[0], -4 + p[1])
         glEnd()
 
+    def update_objects(self):
+        self.move_camera()
+
+        self.player.update_position()
+
+        self.space.step(1/50.0)
+
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
         glEnable(GL_LINE_SMOOTH);
@@ -114,13 +148,12 @@ class Game(object):
         self.camera.update()
         self.camera.focus(self.win.width, self.win.height)
 
-        for ball in self.balls:
-            self.draw_ball(ball)
-
         for box in self.boxes:
             self.draw_box(box)
 
-        self.space.step(1/50.0)
+        for ball in self.balls:
+            self.draw_ball(ball)
+
         self.player.sprite.draw()
 
         self.camera.hud_mode(self.win.width, self.win.height)
@@ -132,28 +165,46 @@ game = Game()
 @game.win.event
 def on_draw():
     game.draw()
+    game.update_objects()
 
 # on_draw is triggered after all events by default. This 'null' event
 # is scheduled just to force a screen redraw for every frame
 clock.schedule(lambda _: None)
 
-key_handlers = {
+key_press_handlers = {
     key.ESCAPE: lambda: game.win.close(),
     key.PAGEUP: lambda: game.camera.zoom(2),
     key.PAGEDOWN: lambda: game.camera.zoom(0.5),
-    key.LEFT: lambda: game.camera.setTarget(game.camera.x - 30, game.camera.y),
-    key.RIGHT: lambda: game.camera.setTarget(game.camera.x + 30, game.camera.y),
-    key.DOWN: lambda: game.camera.setTarget(game.camera.x, game.camera.y - 30),
-    key.UP: lambda: game.camera.setTarget(game.camera.x, game.camera.y + 30),
-    key.COMMA: lambda: game.camera.tilt(-1),
-    key.PERIOD: lambda: game.camera.tilt(+1),
-    key.SPACE: lambda: game.balls.append(add_ball(space)),
+    key.LEFT: lambda: game.set_camera_dx(-1),
+    key.RIGHT: lambda: game.set_camera_dx(1),
+    key.DOWN: lambda: game.set_camera_dy(-1),
+    key.UP: lambda: game.set_camera_dy(1),
+    key.COMMA: lambda: game.camera.tilt(-pi/2),
+    key.PERIOD: lambda: game.camera.tilt(+pi/2),
+    key.SPACE: lambda: game.balls.append(game.add_ball()),
+}
+
+key_release_handlers = {
+    key.LEFT: lambda: game.set_camera_dx(0),
+    key.RIGHT: lambda: game.set_camera_dx(0),
+    key.DOWN: lambda: game.set_camera_dy(0),
+    key.UP: lambda: game.set_camera_dy(0),
 }
 
 @game.win.event
 def on_key_press(symbol, modifiers):
-    handler = key_handlers.get(symbol, lambda: None)
+    handler = key_press_handlers.get(symbol, lambda: None)
     handler()
-    
+
+@game.win.event
+def on_key_release(symbol, modifiers):
+    handler = key_release_handlers.get(symbol, lambda: None)
+    handler()
+
+@game.win.event
+def on_mouse_press(x, y, button, modifiers):
+    if button == mouse.LEFT:
+        game.balls.append(game.add_ball(x, y))
+
 game.win.set_visible()
 app.run()
