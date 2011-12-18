@@ -8,6 +8,8 @@ from pyglet.window.key import symbol_string
 from pyglet.gl import *
 from camera import Camera
 
+from libs.pyeuclid import *
+
 import pyglet
 import pymunk 
 
@@ -31,7 +33,7 @@ class Game(object):
         self.balls = []
         self.lines = []
 
-        self.BOX_WIDTH = 30
+        self.BOX_WIDTH = 40
         self.boxes = []
 
         level = (
@@ -47,22 +49,13 @@ class Game(object):
             for x, boxHere in enumerate(row):
                 if boxHere:
                     self.boxes.append(self.add_static_box(
-                            x*(self.BOX_WIDTH*3),
-                            y*(self.BOX_WIDTH*3) - 200)
+                            x*(self.BOX_WIDTH*2),
+                            y*(self.BOX_WIDTH*2) - 200)
                         )
-
-        #keyboard stuff
-        self.dx_camera = 0
-        self.dy_camera = 0
-        self.camera_speed_scale = 100
 
         self.camera.setTarget(0, 0)
 
     def move_camera(self):
-        #self.camera.setTarget(
-        #    self.camera.x + self.dx_camera * self.camera_speed_scale,
-        #    self.camera.y + self.dy_camera * self.camera_speed_scale
-        #)
         self.camera.setTarget(*self.player.position)
 
     def set_camera_dx(self, dx):
@@ -106,7 +99,7 @@ class Game(object):
     def draw_box(self, box):
         p = int(box.body.position.x), int(box.body.position.y)
         glBegin(GL_POLYGON)
-        glColor3ub(255, 100, 100)
+        glColor3ub(100, 100, 100)
         w = self.BOX_WIDTH
         glVertex2f(-w + p[0], -w + p[1])
         glVertex2f(-w + p[0], +w + p[1])
@@ -129,9 +122,16 @@ class Game(object):
         p = int(ball.body.position.x), int(ball.body.position.y)
         glBegin(GL_POLYGON)
         glColor3ub(255, 255, 000)
-        glVertex2f(-4 + p[0], -4 + p[1])
-        glVertex2f(+0 + p[0], +4 + p[1])
-        glVertex2f(+4 + p[0], -4 + p[1])
+
+        points = (Vector2(-4, -4),
+                  Vector2(+0, +4),
+                  Vector2(+4, -4))
+        m = Matrix3.new_rotate(ball.body.angle)
+        m1 = Matrix3.new_translate(p[0], p[1])
+        m *= m1
+        glVertex2f(*(m * points[0]))
+        glVertex2f(*(m * points[1]))
+        glVertex2f(*(m * points[2]))
         glEnd()
 
     def update_objects(self):
