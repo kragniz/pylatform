@@ -144,6 +144,8 @@ class Lamp(object):
 
     def draw(self):
         self._lamp.draw()
+        
+    def draw_flare(self):
         self._flare.draw()
 
     @property
@@ -225,3 +227,9 @@ class Map(object):
     def draw(self):
         for block in self.blocks:
             self.draw_block(block)
+
+    def to_world(self, x, y):
+        '''Return the realworld coordinates from a pair of map coordinates
+            -> map coordinates are counted from the bottom left of the map and
+               incrent by one every block'''
+        return x*self.BLOCK_WIDTH, y*self.BLOCK_WIDTH

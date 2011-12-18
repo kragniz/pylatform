@@ -28,15 +28,13 @@ class Game(object):
         self.space.gravity = (0, -500.0)
         self.space.damping = 0.999
 
-        self.player = alone.Player()
+        self.map = alone.Map(self.space)
+
+        self.player = alone.Player(*self.map.to_world(1,1))
         self.space.add(self.player.box, self.player.body)
         self.space.add_collision_handler(0, 0, None, None, self.print_collision, None)
 
-        self.map = alone.Map(self.space)
-
-
         self.balls = []
-        self.lines = []
 
         self.lamps = [alone.Lamp()]
 
@@ -75,16 +73,6 @@ class Game(object):
         self.space.add(body, shape)
         return shape
 
-    def draw_line(self, line):
-        body = line.body
-        pv1 = body.position + line.a.rotated(body.angle)
-        pv2 = body.position + line.b.rotated(body.angle)
-
-        glLineWidth (3)                                                                
-        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,                                    
-            ('v2i', (int(pv1[0]), int(pv1[1]), int(pv2[0]), int(pv1[1])))                                                
-        )
-
     def draw_ball(self, ball):
         p = int(ball.body.position.x), int(ball.body.position.y)
         glBegin(GL_POLYGON)
@@ -119,6 +107,9 @@ class Game(object):
             lamp.draw()
 
         self.player.draw()
+
+        for lamp in self.lamps:
+            lamp.draw_flare()
 
         glBegin(GL_POLYGON)
         glColor3ub(255, 255, 255)
