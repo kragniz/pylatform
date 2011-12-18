@@ -32,29 +32,13 @@ class Game(object):
         self.space.add(self.player.box, self.player.body)
         self.space.add_collision_handler(0, 0, None, None, self.print_collision, None)
 
+        self.map = alone.Map(self.space)
+
 
         self.balls = []
         self.lines = []
 
-        self.BOX_WIDTH = 40
-        self.boxes = []
-
-        level = (
-            (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1),
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-        )
-
-        #build the level
-        for y, row in enumerate(reversed(level)):
-            for x, boxHere in enumerate(row):
-                if boxHere:
-                    self.boxes.append(self.add_static_box(
-                            x*(self.BOX_WIDTH*2),
-                            y*(self.BOX_WIDTH*2) - 200)
-                        )
+        self.lamps = [alone.Lamp()]
 
         self.camera.setTarget(0, 0)
 
@@ -91,32 +75,6 @@ class Game(object):
         self.space.add(body, shape)
         return shape
 
-    def add_static_box(self, x=0, y=0):
-        body = pymunk.Body()
-        body.position = (x, y)
-        w = self.BOX_WIDTH
-        box = pymunk.Poly(body, (
-            (-w, -w),
-            (-w, +w),
-            (+w, +w),
-            (+w, -w)))
-        box.friction = 0.5
-        box.elasticity = 0.5
-        self.space.add_static(box)
-        return box
-
-    def draw_box(self, box):
-        p = int(box.body.position.x), int(box.body.position.y)
-        glBegin(GL_POLYGON)
-        glColor3ub(100, 100, 100)
-        w = self.BOX_WIDTH
-        glVertex2f(-w + p[0], -w + p[1])
-        glVertex2f(-w + p[0], +w + p[1])
-        glVertex2f(+w + p[0], +w + p[1])
-        glVertex2f(+w + p[0], -w + p[1])
-        glEnd()
-
-
     def draw_line(self, line):
         body = line.body
         pv1 = body.position + line.a.rotated(body.angle)
@@ -149,18 +107,26 @@ class Game(object):
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
         self.camera.update()
         self.camera.focus(self.win.width, self.win.height)
 
-        for box in self.boxes:
-            self.draw_box(box)
+        self.map.draw()
 
         for ball in self.balls:
             self.draw_ball(ball)
 
-        self.player.sprite.draw()
+        for lamp in self.lamps:
+            lamp.draw()
+
+        self.player.draw()
+
+        glBegin(GL_POLYGON)
+        glColor3ub(255, 255, 255)
+        glVertex2f(-1, -1)
+        glVertex2f(-1, 1)
+        glVertex2f(1, 1)
+        glVertex2f(1, -1)
+        glEnd()
 
         self.camera.hud_mode(self.win.width, self.win.height)
         #glColor3ub(50, 50, 50)
@@ -221,6 +187,11 @@ def on_key_release(symbol, modifiers):
 def on_mouse_press(x, y, button, modifiers):
     if button == mouse.LEFT:
         game.balls.append(game.add_ball(x, y))
+
+
+
+glEnable(GL_LINE_SMOOTH);
+glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE)
 
 game.win.set_visible()
 app.run()

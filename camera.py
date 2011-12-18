@@ -34,7 +34,7 @@ class Camera(object):
         self.angle = angle
         self.target = Target(self)
 
-        self.dUpdate = 0.2
+        self.dUpdate = 0.15
 
     def setTarget(self, x, y):
         self.target.x = x
