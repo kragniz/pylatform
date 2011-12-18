@@ -26,6 +26,7 @@ class Game(object):
 
         self.space = pymunk.Space() #2
         self.space.gravity = (0, -500.0)
+        self.space.damping = 0.999
 
         self.player = alone.Player()
         self.space.add(self.player.box, self.player.body)
@@ -39,11 +40,11 @@ class Game(object):
         self.boxes = []
 
         level = (
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0),
-            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1)
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
+            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
+            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1),
+            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1),
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         )
 
         #build the level
@@ -100,6 +101,7 @@ class Game(object):
             (+w, +w),
             (+w, -w)))
         box.friction = 0.5
+        box.elasticity = 0.5
         self.space.add_static(box)
         return box
 
@@ -185,7 +187,12 @@ key_press_handlers = {
     key.UP: lambda: game.set_camera_dy(1),
     key.COMMA: lambda: game.camera.tilt(-pi/2),
     key.PERIOD: lambda: game.camera.tilt(+pi/2),
+
     key.SPACE: lambda: game.player.jump(),
+    key.A: lambda: game.player.set_dx(-1),
+    key.D: lambda: game.player.set_dx(1),
+    key.W: lambda: game.player.set_dx(-1),
+    key.S: lambda: game.player.set_dx(1),
 }
 
 key_release_handlers = {
@@ -193,6 +200,11 @@ key_release_handlers = {
     key.RIGHT: lambda: game.set_camera_dx(0),
     key.DOWN: lambda: game.set_camera_dy(0),
     key.UP: lambda: game.set_camera_dy(0),
+
+    key.A: lambda: game.player.set_dx(0),
+    key.D: lambda: game.player.set_dx(0),
+    key.W: lambda: game.player.set_dx(0),
+    key.S: lambda: game.player.set_dx(0),
 }
 
 @game.win.event

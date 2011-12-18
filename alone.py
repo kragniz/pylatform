@@ -5,12 +5,21 @@ from math import pi
 
 class Player(object):
     def __init__(self, x=400, y=70):
-        playerImage = pyglet.resource.image('man.png')
-        self.sprite = pyglet.sprite.Sprite(playerImage, x=x, y=y)
+        playerImageTile = pyglet.resource.image('man.png')
+        self.playerRight = playerImageTile.get_region(
+            0, 0, 64, 64
+            )
+        self.playerLeft = playerImageTile.get_region(
+            64, 0, 64, 64
+            )
 
-        self.height = playerImage.height
-        self.width = playerImage.width
+        self.sprite = pyglet.sprite.Sprite(self.playerLeft, x=x, y=y)
+
+        self.height = self.playerRight.height
+        self.width = self.playerRight.width
         mass = 10
+
+        self.maxSpeed = 200
 
         self.body = pymunk.Body(mass, float('inf')) #infinity!
         self.body.position = (x, y)
@@ -23,14 +32,24 @@ class Player(object):
             (self.width, self.height),
             (self.width, 0)))
         self.box.friction = 1
+        self.box.elasticity = 0.4
 
         self.touchingObject = False
+
+        self._dx = 0
+        self._v_step = 25
 
     def jump(self):
     	if self.touchingObject:
     		self.body.apply_impulse((0, 4000))
         
     def update_position(self):
+    	v_x = self.body.velocity[0]
+    	v_y = self.body.velocity[1]
+
+    	if not abs(v_x + self.dx * self._v_step) >= self.maxSpeed:
+    		self.body.velocity = (v_x + self.dx * self._v_step, v_y)
+
     	self.sprite.set_position(
     	    self.box.body.position[0],
     	    self.box.body.position[1]
@@ -39,17 +58,27 @@ class Player(object):
     	self.touchingObject = False
 
     @property
-    def position(self):
-    	return self.box.body.position
+    def dx(self):
+    	return self._dx
 
-    @position.setter
-    def position(self, p):
-    	self.box.body.position = p
+    def __set_player_image(self):
+    	if self._dx > 0:
+    		if self.sprite.image != self.playerRight:
+    			self.sprite.image = self.playerRight
+    	if self._dx < 0:
+     		if self.sprite.image != self.playerLeft:
+    			self.sprite.image = self.playerLeft
+    
+    @dx.setter
+    def dx(self, x):
+    	self._dx = x
+    	self.__set_player_image()
+
+    def set_dx(self, x):
+    	self._dx = x
+    	self.__set_player_image()
 
     @property
     def center(self):
     	return self.box.body.position[0] + self.width / 2, \
     	       self.box.body.position[1] + self.height / 2
-
-    def move_x(self, dx):
-    	self.sprite.x += dx

@@ -34,6 +34,8 @@ class Camera(object):
         self.angle = angle
         self.target = Target(self)
 
+        self.dUpdate = 0.2
+
     def setTarget(self, x, y):
         self.target.x = x
         self.target.y = y
@@ -49,10 +51,10 @@ class Camera(object):
         self.target.angle += angle
 
     def update(self):
-        self.x += (self.target.x - self.x) * 0.1
-        self.y += (self.target.y - self.y) * 0.1
-        self.scale += (self.target.scale - self.scale) * 0.1
-        self.angle += (self.target.angle - self.angle) * 0.1
+        self.x += (self.target.x - self.x) * self.dUpdate
+        self.y += (self.target.y - self.y) * self.dUpdate
+        self.scale += (self.target.scale - self.scale) * self.dUpdate
+        self.angle += (self.target.angle - self.angle) * self.dUpdate
 
 
     def focus(self, width, height):
