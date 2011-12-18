@@ -1,6 +1,8 @@
 import pyglet
 import pymunk
 from pyglet.gl import *
+from collections import defaultdict
+from random import choice
 
 class Player(object):
     '''Represents a player, the character the user controls'''
@@ -263,4 +265,37 @@ class Powerup(object):
 
 class Maze(object):
     def __init__(self, w=10, h=10):
-        pass
+        bw = w * 2 + 1
+        bh = h * 2 + 1
+        self.maze = [[1 for j in range(bh)] for i in range(bw)]
+        self.walls = []
+
+    def __str__(self):
+        return '\n'.join([' '.join(str(r).replace(', ', ' '))[2:-2] for r in self.maze])
+
+    def set_value_at(self, v, x, y):
+        try:
+            self.maze[x][y] = v
+        except IndexError:
+            pass
+
+    def get_value_at(self, x, y):
+        try:
+            return self.maze[x][y]
+        except IndexError:
+            return None
+        
+    def __walls(self, x, y):
+        return  [(x+1, y),
+                 (x-1, y),
+                 (x, y+1),
+                 (x, y-1)]
+
+    def gen(self, x=3, y=10):
+        self.maze[x][y] = 0
+
+        self.walls = self.__walls(x, y)
+        print self.walls
+
+        wall = choice(self.walls)
+        self.set_value_at(0, *wall)
