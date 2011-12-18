@@ -37,11 +37,12 @@ class Player(object):
         self.touchingObject = False
 
         self._dx = 0
-        self._v_step = 25
+        self._v_step = 10
 
     def jump(self):
         if self.touchingObject:
             self.body.apply_impulse((0, 4000))
+        print self.body.position
         
     def update_position(self):
         v_x = self.body.velocity[0]
@@ -123,22 +124,19 @@ class Spirit(object):
 
 class Lamp(object):
     '''A lamp object, something the spirits are attracted towards'''
-    def __init__(self, x=40, y=0):
+    def __init__(self, x=0, y=0):
         self._x, self._y = 0, 0
 
-        flareScale = 20
+        flareScale = 4
 
         lampImage = pyglet.resource.image('lamp.png')
         flareImage = pyglet.resource.image('lampGlow.png')
 
         self._lamp = pyglet.sprite.Sprite(lampImage, x=x, y=y)
 
-        self._flare = pyglet.sprite.Sprite(flareImage, 
-            x=x-self.center[0]*flareScale-1,
-            y=-self.center[1]*flareScale-1
-        )
+        self._flare = pyglet.sprite.Sprite(flareImage)
         self._flare.scale = flareScale
-        self._flare.opacity = 50
+        self._flare.opacity = 100
 
         self.x, self.y = x, y
 
@@ -146,7 +144,7 @@ class Lamp(object):
         self._lamp.draw()
         
     def draw_flare(self):
-        self._flare.draw()
+        pass#self._flare.draw()
 
     @property
     def x(self):
@@ -155,16 +153,22 @@ class Lamp(object):
     @x.setter
     def x(self, new_x):
         self._x = new_x
-        self._lamp.x = self.x - self._lamp.width / 2
+        self._lamp.x = self.x - self._lamp.width
+        print self._lamp.x
+        self._flare.x = (self._lamp.x / self._flare.scale) + self._flare.width/self._flare.scale
+        print self._flare.width * self._flare.scale
 
     @property
     def y(self):
-        return self._x
+        return self._y
 
     @x.setter
     def y(self, new_y):
         self._y = new_y
         self._lamp.y = self._y
+        self._flare.y = self.y - self._flare.height
+
+        print self._flare.y
 
     @property
     def center(self):
@@ -175,11 +179,11 @@ class Lamp(object):
 class Map(object):
     '''Manages and draws items on a map'''
     def __init__(self, space, level= (
-            (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+            (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
         )
             ):
         self.space = space
@@ -196,7 +200,7 @@ class Map(object):
                 if place_block:
                     self.blocks.append(self.add_static_block(
                             x*(self.BLOCK_WIDTH*2),
-                            y*(self.BLOCK_WIDTH*2))
+                            y*(self.BLOCK_WIDTH*2)+self.BLOCK_WIDTH*2)
                         )
 
     def add_static_block(self, x=0, y=0):
@@ -231,5 +235,32 @@ class Map(object):
     def to_world(self, x, y):
         '''Return the realworld coordinates from a pair of map coordinates
             -> map coordinates are counted from the bottom left of the map and
-               incrent by one every block'''
+               increment by one every block'''
         return x*self.BLOCK_WIDTH, y*self.BLOCK_WIDTH
+
+class Powerup(object):
+    def __init__(self, x=0, y=0):
+        powerupImage = pyglet.resource.image('powerup.png')
+        self.sprite = pyglet.sprite.Sprite(powerupImage, x=x, y=y)
+
+        self.height = self.sprite.height
+        self.width = self.sprite.width
+
+        mass = 1
+
+        self.body = pymunk.Body(mass, float('inf'))
+        self.body.position = (x, y)
+
+        self.box = pymunk.Poly(self.body, (
+            (0, 0),
+            (0, self.height),
+            (self.width, self.height),
+            (self.width, 0)))
+        self.box.sensor = True
+
+    def draw(self):
+        self.sprite.draw()
+
+class Maze(object):
+    def __init__(self, w=10, h=10):
+        pass

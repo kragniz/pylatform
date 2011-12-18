@@ -19,7 +19,7 @@ import random
 
 class Game(object):
     def __init__(self):
-        self.win = Window(fullscreen=True, visible=False)
+        self.win = Window(fullscreen=False, visible=False)
         self.clockDisplay = clock.ClockDisplay()
         glClearColor(0.2, 0.2, 0.2, 1)
         self.camera = Camera((0, 0), 250)
@@ -30,13 +30,15 @@ class Game(object):
 
         self.map = alone.Map(self.space)
 
-        self.player = alone.Player(*self.map.to_world(1,1))
+        self.player = alone.Player(*self.map.to_world(1,2))
         self.space.add(self.player.box, self.player.body)
         self.space.add_collision_handler(0, 0, None, None, self.print_collision, None)
 
         self.balls = []
 
-        self.lamps = [alone.Lamp()]
+        self.lamps = [alone.Lamp(*self.map.to_world(4, 3))]
+
+        #self.powerups = [alone.Powerup(*self.map.to_world(1, 4))]
 
         self.camera.setTarget(0, 0)
 
@@ -106,10 +108,15 @@ class Game(object):
         for lamp in self.lamps:
             lamp.draw()
 
+        #for powerup in self.powerups:
+        #    powerup.draw()
+
         self.player.draw()
 
         for lamp in self.lamps:
             lamp.draw_flare()
+
+        #draw a small cube at the origin
 
         glBegin(GL_POLYGON)
         glColor3ub(255, 255, 255)
