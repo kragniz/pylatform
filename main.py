@@ -19,10 +19,10 @@ import random
 
 class Game(object):
     def __init__(self):
-        self.win = Window(fullscreen=False, visible=False)
+        self.win = Window(fullscreen=True, visible=False)
         self.clockDisplay = clock.ClockDisplay()
         glClearColor(0.2, 0.2, 0.2, 1)
-        self.camera = Camera((0, 0), 200)
+        self.camera = Camera((0, 0), 250)
 
         self.space = pymunk.Space() #2
         self.space.gravity = (0, -500.0)
@@ -40,8 +40,8 @@ class Game(object):
         self.boxes = []
 
         level = (
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
-            (0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
+            (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1),
+            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1),
             (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1),
             (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1),
             (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
