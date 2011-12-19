@@ -1,8 +1,9 @@
 import pyglet
 import pymunk
 from pyglet.gl import *
-from collections import defaultdict
-from random import choice
+import numpy as np
+from numpy.random import random_integers as rnd
+import random
 
 class Player(object):
     '''Represents a player, the character the user controls'''
@@ -21,7 +22,8 @@ class Player(object):
         self.width = self.playerRight.width
         mass = 10
 
-        self.maxSpeed = 200
+        self.maxSpeed = 300
+        self.maxJumpSpeed = 200
 
         self.body = pymunk.Body(mass, float('inf')) #infinity!
         self.body.position = (x, y)
@@ -33,7 +35,7 @@ class Player(object):
             (0, self.height),
             (self.width, self.height),
             (self.width, 0)))
-        self.box.friction = 1
+        self.box.friction = 0.2
         self.box.elasticity = 0.4
 
         self.touchingObject = False
@@ -42,9 +44,8 @@ class Player(object):
         self._v_step = 10
 
     def jump(self):
-        if self.touchingObject:
+        if self.touchingObject and self.body.velocity[1] < self.maxJumpSpeed:
             self.body.apply_impulse((0, 4000))
-        print self.body.position
         
     def update_position(self):
         v_x = self.body.velocity[0]
@@ -177,24 +178,56 @@ class Lamp(object):
         return self.x + self._lamp.width / 2, \
                self.y + self._lamp.height / 2
 
+def maze(width=81, height=51, complexity=.75, density =.75):
+    # Only odd shapes
+    shape = ((height//2)*2+1, (width//2)*2+1)
+    # Adjust complexity and density relative to maze size
+    complexity = int(complexity*(5*(shape[0]+shape[1])))
+    density    = int(density*(shape[0]//2*shape[1]//2))
+    # Build actual maze
+    Z = np.zeros(shape, dtype=bool)
+    # Fill borders
+    Z[0,:] = Z[-1,:] = 1
+    Z[:,0] = Z[:,-1] = 1
+    # Make isles
+    for i in range(density):
+        x, y = rnd(0,shape[1]//2)*2, rnd(0,shape[0]//2)*2
+        Z[y,x] = 1
+        for j in range(complexity):
+            neighbours = []
+            if x > 1:           neighbours.append( (y,x-2) )
+            if x < shape[1]-2:  neighbours.append( (y,x+2) )
+            if y > 1:           neighbours.append( (y-2,x) )
+            if y < shape[0]-2:  neighbours.append( (y+2,x) )
+            if len(neighbours):
+                y_,x_ = neighbours[rnd(0,len(neighbours)-1)]
+                if Z[y_,x_] == 0:
+                    Z[y_,x_] = 1
+                    Z[y_+(y-y_)//2, x_+(x-x_)//2] = 1
+                    x, y = x_, y_
+    return Z
+
+def make_map(w=40, h=20):
+    l = [random.randint(1, h) for i in range(w/4)]
+    print l
+
+
 
 class Map(object):
     '''Manages and draws items on a map'''
-    def __init__(self, space, level= (
-            (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0),
-            (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-        )
-            ):
+    def __init__(self, space, level=maze(20, 20)):
         self.space = space
 
+        make_map()
+
         self.level = level
-        self.BLOCK_WIDTH = 80
+        self.BLOCK_WIDTH = 200
         self.blocks = []
 
         self.build_blocks()
+
+        self.c = 0
+        self.inc = 1
 
     def build_blocks(self):
         for y, row in enumerate(reversed(self.level)):
@@ -222,7 +255,7 @@ class Map(object):
     def draw_block(self, block):
         p = int(block.body.position.x), int(block.body.position.y)
         glBegin(GL_POLYGON)
-        glColor3ub(100, 100, 100)
+        glColor3ub(255 , 255 , 255)
         w = self.BLOCK_WIDTH
         glVertex2f(p[0], p[1])
         glVertex2f(p[0] + w, p[1])
@@ -262,40 +295,3 @@ class Powerup(object):
 
     def draw(self):
         self.sprite.draw()
-
-class Maze(object):
-    def __init__(self, w=10, h=10):
-        bw = w * 2 + 1
-        bh = h * 2 + 1
-        self.maze = [[1 for j in range(bh)] for i in range(bw)]
-        self.walls = []
-
-    def __str__(self):
-        return '\n'.join([' '.join(str(r).replace(', ', ' '))[2:-2] for r in self.maze])
-
-    def set_value_at(self, v, x, y):
-        try:
-            self.maze[x][y] = v
-        except IndexError:
-            pass
-
-    def get_value_at(self, x, y):
-        try:
-            return self.maze[x][y]
-        except IndexError:
-            return None
-        
-    def __walls(self, x, y):
-        return  [(x+1, y),
-                 (x-1, y),
-                 (x, y+1),
-                 (x, y-1)]
-
-    def gen(self, x=3, y=10):
-        self.maze[x][y] = 0
-
-        self.walls = self.__walls(x, y)
-        print self.walls
-
-        wall = choice(self.walls)
-        self.set_value_at(0, *wall)

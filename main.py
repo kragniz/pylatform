@@ -19,7 +19,7 @@ import random
 
 class Game(object):
     def __init__(self):
-        self.win = Window(fullscreen=False, visible=False)
+        self.win = Window(fullscreen=True, visible=False)
         self.clockDisplay = clock.ClockDisplay()
         glClearColor(0.2, 0.2, 0.2, 1)
         self.camera = Camera((0, 0), 250)
@@ -39,6 +39,16 @@ class Game(object):
         self.lamps = [alone.Lamp(*self.map.to_world(4, 3))]
 
         #self.powerups = [alone.Powerup(*self.map.to_world(1, 4))]
+
+        darkImage = pyglet.resource.image('dark.png')
+        winSize = self.win.get_size()
+
+        self.darkness = pyglet.sprite.Sprite(darkImage, x=0, y=0)
+        self.darkness.scale = winSize[0]/darkImage.width
+        
+        backgroundImage = pyglet.resource.image('background.png')
+        self.background = pyglet.sprite.Sprite(backgroundImage, x=0, y=0)
+        self.background.scale = winSize[0]/backgroundImage.width
 
         self.camera.setTarget(0, 0)
 
@@ -93,11 +103,12 @@ class Game(object):
 
         self.player.update_position()
 
-        self.space.step(1/50.0)
+        self.space.step(1/30.0)
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
         self.camera.update()
+        self.background.draw()
         self.camera.focus(self.win.width, self.win.height)
 
         self.map.draw()
@@ -127,6 +138,9 @@ class Game(object):
         glEnd()
 
         self.camera.hud_mode(self.win.width, self.win.height)
+
+        self.darkness.draw()
+
         #glColor3ub(50, 50, 50)
         self.clockDisplay.draw()
 
@@ -155,7 +169,7 @@ key_press_handlers = {
     key.SPACE: lambda: game.player.jump(),
     key.A: lambda: game.player.set_dx(-1),
     key.D: lambda: game.player.set_dx(1),
-    key.W: lambda: game.player.set_dx(-1),
+    key.W: lambda: game.player.jump(),
     key.S: lambda: game.player.set_dx(1),
 }
 
@@ -167,7 +181,7 @@ key_release_handlers = {
 
     key.A: lambda: game.player.set_dx(0),
     key.D: lambda: game.player.set_dx(0),
-    key.W: lambda: game.player.set_dx(0),
+    #key.W: lambda: game.player.set_dx(0),
     key.S: lambda: game.player.set_dx(0),
 }
 
