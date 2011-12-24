@@ -8,8 +8,6 @@ from pyglet.window.key import symbol_string
 from pyglet.gl import *
 from camera import Camera
 
-from libs.pyeuclid import *
-
 import pyglet
 import pymunk 
 
